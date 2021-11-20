@@ -4,13 +4,28 @@ Experimental support for VS Code Server in NixOS. The NodeJS by default supplied
 
 ## Installation
 
+### Flake
 ```nix
 {
-  imports = [
-    (fetchTarball "https://github.com/msteen/nixos-vscode-server/tarball/master")
-  ];
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixos-vscode-server.url ="github:iosmanthus/nixos-vscode-server/add-flake";
+  };
 
-  services.vscode-server.enable = true;
+  outputs = inputs@{self, nixpkgs, ...}: {
+    nixosConfigurations.some-host = nixpkgs.lib.nixosSystem rec {
+        system = "x86_64-linux";
+        # For more information of this field, check:
+        # https://github.com/NixOS/nixpkgs/blob/master/nixos/lib/eval-config.nix
+        modules = [
+          ./configuration.nix
+          {
+            imports = [ inputs.auto-fix-vscode-server.nixosModules.system ];
+            services.auto-fix-vscode-server.enable = true;
+          }
+        ];
+      };
+  };
 }
 ```
 
@@ -50,11 +65,30 @@ Put this code into your [home-manager](https://github.com/nix-community/home-man
 
 ```nix
 {
-  imports = [
-    "${fetchTarball "https://github.com/msteen/nixos-vscode-server/tarball/master"}/modules/vscode-server/home.nix"
-  ];
+    inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixos-vscode-server.url ="github:iosmanthus/nixos-vscode-server/add-flake";
+  };
 
-  services.vscode-server.enable = true;
+  outputs = inputs@{self, nixpkgs, ...}: {
+    nixosConfigurations.some-host = nixpkgs.lib.nixosSystem rec {
+        system = "x86_64-linux";
+        # For more information of this field, check:
+        # https://github.com/NixOS/nixpkgs/blob/master/nixos/lib/eval-config.nix
+        modules = [
+          ./configuration.nix
+          {
+            home-manager = {
+              user.iosmanthus = {
+                imports = [ 
+                  inputs.nixos-vscode-server.nixosModules.homeManager;
+                ];
+              };
+            };
+          }
+        ];
+      };
+    };
 }
 ```
 
